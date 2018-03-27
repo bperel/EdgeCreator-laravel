@@ -1,0 +1,15 @@
+version: '2'
+services:
+  ec_laravel:
+    container_name: ec_laravel
+    build:
+      context: .
+      dockerfile: Dockerfile-dev
+    ports:
+     - "8003:80"
+    volumes:
+     - .:/var/www/html
+networks:
+  default:
+    external:
+      name: dm_network
