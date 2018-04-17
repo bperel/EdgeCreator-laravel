@@ -1,6 +1,7 @@
 <?php namespace App\Auth;
 
 use App\Helpers\DmClient;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\UserProvider;
 
@@ -25,7 +26,7 @@ class DmUserProvider implements UserProvider
     /**
      * @param array $credentials
      * @return DmUser
-     * @throws \Exception
+     * @throws AuthenticationException
      */
     public function retrieveByCredentials(array $credentials) {
         self::$dmClient = resolve(DmClient::class);
@@ -38,12 +39,13 @@ class DmUserProvider implements UserProvider
               (SELECT privilege FROM users_permissions WHERE username = users.username AND users_permissions.role = 'EdgeCreator') AS privilege
             FROM users
             WHERE users.username ='{$credentials['username']}' AND users.password = '{$credentials['password']}'";
-        $resultat = self::$dmClient->getQueryResults($query, self::$dmClient->DB_DM);
-        if (count($resultat) == 0) {
-            throw new \Exception('Invalid credentials !');
+
+        $result = self::$dmClient->getQueryResults($query, self::$dmClient->DB_DM);
+        if (count($result) === 0) {
+            throw new AuthenticationException('Invalid credentials !');
         }
 
-        return new DmUser($resultat[0]->ID, $resultat[0]->username, $resultat[0]->password, $resultat[0]->privilege);
+        return new DmUser($result[0]->ID, $result[0]->username, $result[0]->password, $result[0]->privilege);
     }
 
     public function validateCredentials(Authenticatable $user, array $credentials) {

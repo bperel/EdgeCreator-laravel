@@ -11,13 +11,19 @@
 |
 */
 
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
+    if (!session()->has('username')) {
+        return redirect('/login');
+    }
     return view('welcome');
 });
 
-Auth::routes();
+Route::get('/login', function () {
+    return view('auth.login');
+});
 
-//Route::get('/home', 'HomeController@index')->name('home');
+Route::post('/login', 'UserController@login');
+
+Route::get('/logout', 'UserController@logout');
