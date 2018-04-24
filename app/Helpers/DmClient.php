@@ -2,8 +2,10 @@
 
 namespace App\Helpers;
 
+use App\Exceptions\DmClientException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\HttpFoundation\Response;
 
 class DmClient
@@ -26,7 +28,7 @@ class DmClient
 
         foreach (self::$roles as $roleName) {
             if (!isset($roleCredentials[$roleName])) {
-                throw new \Exception('Unknown role : '.$roleName);
+                throw new \RuntimeException("Unknown role : $roleName");
             }
         }
         $this->roleCredentials = $roleCredentials;
@@ -36,7 +38,7 @@ class DmClient
      * @param string $query
      * @param string $db
      * @return mixed|null
-     * @throws \Exception
+     * @throws DmClientException
      */
     public function getQueryResults($query, $db)
     {
@@ -53,14 +55,14 @@ class DmClient
      * @param string $role
      * @param bool   $do_not_chunk
      * @return mixed|null
-     * @throws \Exception
+     * @throws DmClientException
      */
     public function getServiceResults($method, $path, $parameters = [], $role = 'rawsql', $do_not_chunk = false) {
         switch ($method) {
             case 'GET':
                 if (count($parameters) > 0) {
                     if (!$do_not_chunk && count($parameters) === 1 && isset(self::$chunkable_services[$path])) {
-                        return self::get_chunkable_service_results($method, $path, $parameters, $role);
+                        return self::getChunkableServiceResults($method, $path, $parameters, $role);
                     }
                     else {
                         $path .= '/' . implode('/', $parameters);
@@ -75,9 +77,9 @@ class DmClient
             'Cache-Control' => ' no-cache',
             'x-dm-version' => ' 1.0',
         ];
-        if (session()->has('user')) {
-            $headers[] = 'x-dm-user: ' . session()->get('user');
-            $headers[] = 'x-dm-pass: ' . session()->get('pass');
+        if (session()->has('username')) {
+            $headers[] = 'x-dm-user: ' . session()->get('username');
+            $headers[] = 'x-dm-pass: ' . session()->get('password');
         }
 
         $url = '/dm-server' . $path;
@@ -90,9 +92,11 @@ class DmClient
             ]);
         }
         catch(ClientException $e) {
-            dd($e->getRequest()->getHeaders());
             $statusCode = $e->getCode();
-            throw new \Exception("Call to service $method $url failed, Response code = $statusCode, response buffer = {$e->getResponse()->getBody()}");
+            throw new DmClientException($method, $url, $statusCode, $e->getMessage(), $e->getResponse());
+        } catch (GuzzleException $e) {
+            $statusCode = $e->getCode();
+            throw new DmClientException($method, $url, $statusCode, $e->getMessage());
         }
 
         switch ($response->getStatusCode()) {
@@ -108,7 +112,7 @@ class DmClient
                 }
         }
 
-        throw new \Exception("Call to service $method $url failed, Response code = {$response->getStatusCode()}, response buffer = $responseBody");
+        throw new DmClientException($method, $url, $response->getStatusCode(), '', $responseBody);
     }
 
     /**
@@ -117,9 +121,9 @@ class DmClient
      * @param array  $parameters
      * @param string $role
      * @return array|null|\stdClass
-     * @throws \Exception
+     * @throws DmClientException
      */
-    private function get_chunkable_service_results($method, $path, $parameters, $role) {
+    private function getChunkableServiceResults($method, $path, $parameters, $role) {
         $parameterListChunks = array_chunk(explode(',', $parameters[count($parameters) - 1]), self::$chunkable_services[$path]);
         $results = null;
         foreach ($parameterListChunks as $parameterListChunk) {

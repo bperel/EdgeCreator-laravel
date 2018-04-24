@@ -26,4 +26,6 @@ Route::get('/login', function () {
 
 Route::post('/login', 'UserController@login');
 
-Route::get('/logout', 'UserController@logout');
+Route::middleware(['dmserver_auth'])->group(function() {
+    Route::get('/logout', 'UserController@logout');
+});

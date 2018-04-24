@@ -9,11 +9,6 @@ use Illuminate\Http\Request;
 class DmServerMiddleware
 {
     /**
-     * @var DmClient $dmClient
-     */
-    private static $dmClient;
-
-    /**
      * Handle an incoming request.
      *
      * @param  Request  $request

@@ -14,12 +14,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/login', 'UserController@login');
-
 Route::middleware(['dmserver_auth'])->group(function() {
     Route::get('/check_logged_in', function () {
         return "OK";
     });
-
-    Route::get('/logout', 'UserController@logout');
 });
