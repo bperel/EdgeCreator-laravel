@@ -9,7 +9,3 @@ services:
      - "8003:80"
     volumes:
      - .:/var/www/html
-networks:
-  default:
-    external:
-      name: dm_network
