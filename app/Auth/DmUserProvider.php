@@ -59,7 +59,7 @@ class DmUserProvider implements UserProvider
     public function createSession($user, $password) {
         session([
             'username' => $user->getAuthIdentifierName(),
-            'pass' => $password,
+            'password' => $password,
             'privilege' => $user->getPrivilege(),
             'mode_expert' => false
         ]);

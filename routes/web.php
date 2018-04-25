@@ -11,6 +11,8 @@
 |
 */
 
+use App\Helpers\DmClient;
+use App\Helpers\Publications;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -28,4 +30,19 @@ Route::post('/login', 'UserController@login');
 
 Route::middleware(['dmserver_auth'])->group(function() {
     Route::get('/logout', 'UserController@logout');
+
+    Route::get('/tranchesencours/load', function () {
+        /** @var DmClient $dmClient */
+        $dmClient = resolve(DmClient::class);
+
+        /** @var Publications $publicationsHelper */
+        $publicationsHelper = resolve(Publications::class);
+        $ongoingModels = $dmClient->getServiceResults('GET', "/edgecreator/v2/model", [], 'edgecreator');
+
+        $publicationsHelper->assignPublicationNames($ongoingModels);
+
+        return [
+            'tranches_en_cours' => $ongoingModels
+        ];
+    });
 });

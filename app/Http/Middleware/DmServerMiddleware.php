@@ -19,6 +19,12 @@ class DmServerMiddleware
      */
     public function handle(Request $request, \Closure $next) {
         if (session()->has('username')) {
+            /** @var DmClient $dmClient */
+            $dmClient = resolve(DmClient::class);
+            $dmClient->setUserCredentials(
+                session()->get('username'),
+                session()->get('password')
+            );
             return $next($request);
         }
         else {

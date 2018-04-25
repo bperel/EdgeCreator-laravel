@@ -10,8 +10,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class DmClient
 {
-    private static $roles = ['rawsql', 'ec'];
+    private static $roles = ['rawsql', 'edgecreator'];
     private $roleCredentials = [];
+    private $userCredentials = [];
 
     public $DB_DM = 'db_dm';
     public $DB_EC = 'db_edgecreator';
@@ -32,6 +33,15 @@ class DmClient
             }
         }
         $this->roleCredentials = $roleCredentials;
+    }
+
+    /**
+     * @param string $username
+     * @param string $password
+     */
+    public function setUserCredentials($username, $password) {
+        $this->userCredentials['x-dm-user'] = $username;
+        $this->userCredentials['x-dm-pass'] = $password;
     }
 
     /**
@@ -72,18 +82,15 @@ class DmClient
             default:
         }
 
-        $headers = [
+        $headers = array_merge([
             'Content-Type' => 'application/x-www-form-urlencoded',
             'Cache-Control' => ' no-cache',
             'x-dm-version' => ' 1.0',
-        ];
-        if (session()->has('username')) {
-            $headers[] = 'x-dm-user: ' . session()->get('username');
-            $headers[] = 'x-dm-pass: ' . session()->get('password');
-        }
+        ], $this->userCredentials);
 
         $url = '/dm-server' . $path;
         $responseBody = null;
+
         try {
             $response = $this->client->request($method, $url, [
                 'auth' => [$role, $this->roleCredentials[$role]],

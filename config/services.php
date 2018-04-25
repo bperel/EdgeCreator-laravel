@@ -38,7 +38,7 @@ return [
         'endpoint' => env('DMSERVER_ENDPOINT'),
         'roles_passwords' => [
             'rawsql' => env('DMSERVER_ROLE_RAWSQL'),
-            'ec' => env('DMSERVER_ROLE_EC')
+            'edgecreator' => env('DMSERVER_ROLE_EC')
 
 
         ]
